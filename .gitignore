@@ -1,3 +1,4 @@
-.bash_profile
-Makefile
-nbproject/*
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
