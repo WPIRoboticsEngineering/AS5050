@@ -38,18 +38,29 @@
 #include "AS5050.h"
 
 
-AS5050::AS5050(byte pin, byte spi_speed){
+AS5050::AS5050(byte mosi_pin, byte miso_pin, byte clk_pin, byte ss_pin, byte spi_speed){
   /*CONSTRUCTOR
   * Sets up the required values for the function, and configures the
   * hardware SPI to operate correctly
   */
-  _pin=pin;
+  _mosi_pin = mosi_pin;
+  _miso_pin = miso_pin;
+  _clk_pin = clk_pin;
+  _ss_pin = ss_pin;
 
   //Prepare the SPI interface
-  pinMode(_pin,OUTPUT);
-  SPI.setClockDivider(spi_speed);       //this board supports speedy! :D
-  SPI.setBitOrder(MSBFIRST);            //Match the expected bit order
-  SPI.setDataMode(SPI_MODE1);           //falling edge (CPOL 1), low idle (CPHA 0);
+  DigitalOut cs(_ss_pin);
+
+  SPI spi(_mosi_pin, _miso_pin, _clk_pin); // mosi, miso, sclk
+
+  // Deselect chip
+  cs = 1;
+
+  // Setup the spi for 16 bit data, high steady state clock,
+  // falling edge (CPOL 1), low idle (CPHA 0) - MODE 2
+  spi.format(16,2);
+  spi.frequency(spi_speed);
+
   //pull pin mode low to assert slave
   //digitalWrite(_pin,LOW);
 
@@ -79,12 +90,12 @@ unsigned int AS5050::send(unsigned int reg_a){
   response.bytes.msb=SPI.transfer(reg.bytes.msb);
   response.bytes.lsb=SPI.transfer(reg.bytes.lsb);
 
-  digitalWrite(_pin,HIGH);	//End Transaction
+  cs = 1;	//End Transaction
   SPI.end();
   return response.value;
 };
 
-
+//TODO: Rewrite for mbed
 unsigned int AS5050::read(unsigned int reg){
   /* Data packet looks like this:
   MSB |14 .......... 2|   1      | LSB
@@ -108,7 +119,7 @@ unsigned int AS5050::read(unsigned int reg){
 }
 
 
-//FIXME: Make the Write return and verify the response.
+//TODO: Rewrite for mbed
 unsigned int AS5050::write(unsigned int reg,unsigned int data){
 
   //Prepare register data

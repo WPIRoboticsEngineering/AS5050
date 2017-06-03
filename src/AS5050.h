@@ -7,25 +7,25 @@
 // Code available at https://github.com/tekdemo/AS5050
 //////////////////////////////////////////////////////////////////////////
 //
-// This program is free software; you can redistribute it 
-// and/or modify it under the terms of the GNU General    
-// Public License as published by the Free Software       
-// Foundation; either version 2 of the License, or        
-// (at your option) any later version.                    
-//                                                        
-// This program is distributed in the hope that it will   
-// be useful, but WITHOUT ANY WARRANTY; without even the  
-// implied warranty of MERCHANTABILITY or FITNESS FOR A   
-// PARTICULAR PURPOSE.  See the GNU General Public        
-// License for more details.                              
-//                                                        
-// You should have received a copy of the GNU General    
-// Public License along with this program; if not, write 
-// to the Free Software Foundation, Inc.,                
+// This program is free software; you can redistribute it
+// and/or modify it under the terms of the GNU General
+// Public License as published by the Free Software
+// Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will
+// be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A
+// PARTICULAR PURPOSE.  See the GNU General Public
+// License for more details.
+//
+// You should have received a copy of the GNU General
+// Public License along with this program; if not, write
+// to the Free Software Foundation, Inc.,
 // 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
-//                                                        
-// Licence can be viewed at                               
-// http://www.fsf.org/licenses/gpl.txt                    
+//
+// Licence can be viewed at
+// http://www.fsf.org/licenses/gpl.txt
 //
 // Please maintain this license information along with authorship
 // and copyright notices in any redistribution of this code
@@ -36,8 +36,7 @@
 #define _AS5050_H_INCLUDED
 
 //Must include standard libs!
-#include "Arduino.h"
-#include <SPI.h>
+#include "mbed.h"
 
 
 //Various library options for tweaking behaviors
@@ -59,7 +58,7 @@ Shifted 1 to make room for parity bit
 OR with AS_READ/AS_WRITE before sending command
 */
 #define REG_POWER_ON_RESET (0x3F22)
-#define REG_SOFTWARE_RESET (0x3C00) 
+#define REG_SOFTWARE_RESET (0x3C00)
 #define REG_MASTER_RESET   (0x33A5)
 #define REG_CLEAR_ERROR    (0x3380)/*Read to reset errors*/
 #define REG_NOP            (0x0000)
@@ -68,7 +67,7 @@ OR with AS_READ/AS_WRITE before sending command
 #define REG_ERROR_STATUS   (0x33A5)
 
 //Data packets when writing the software Reset regarding clearing SPI or not
-#define DATA_SWRESET_SPI    (0x11)  
+#define DATA_SWRESET_SPI    (0x11)
 #define DATA_SWRESET_NO_SPI (0x00)
 
 //Ways to check the responses from the AS5050 when
@@ -78,7 +77,7 @@ OR with AS_READ/AS_WRITE before sending command
 #define RES_ALARM_LOW      (0x4000)   /*Magnetic Field too low*/
 #define RES_ERROR          (RES_PARITY|RES_ERROR_FLAG)  //standard error frame
 //error from reading the angle
-#define RES_ERROR_ANGLE    (RES_PARITY| RES_ERROR_FLAG|RES_ALARM_HIGH|RES_ALARM_LOW) 
+#define RES_ERROR_ANGLE    (RES_PARITY| RES_ERROR_FLAG|RES_ALARM_HIGH|RES_ALARM_LOW)
 
 //Error Status Register
 #define ERR_PARITY    (1<<13)
@@ -86,7 +85,7 @@ OR with AS_READ/AS_WRITE before sending command
 #define ERR_ADDMON    (1<<11)
 //#define RES_ERR_RESERVED3  (1<<10)
 #define ERR_WOW       (1<<9)
-#define ERR_MODE      (1<<8)	
+#define ERR_MODE      (1<<8)
 //#define RES_ERR_RESERVED6  (1<<7)
 //#define RES_ERR_RESERVED7  (1<<6)
 #define ERR_DACOV     (1<<5)	// DAC overflow
@@ -117,7 +116,7 @@ union spi_data{
 
 class AS5050{
   public:
-    AS5050(byte pin, byte spi_speed);
+    AS5050(byte mosi_pin, byte miso_pin, byte clk_pin, byte ss_pin, byte spi_speed);
         unsigned int send(unsigned int);
 
     unsigned int read(unsigned int);
@@ -138,26 +137,29 @@ class AS5050{
     float deltaAngleRad();
     //Reset the home the deltas/totals will use
     void setHome();
-    
+
     //
-    
-    
+
+
     //Make errors accessible from outside the class if needed
     struct error_struct{
 	byte parity;		//will be non-zero if there's a parity error
 	unsigned int transaction;      //holds the error data from angular reads
 	unsigned int status;           //holds the AS5050 error data from other sources
     }error;
-    
+
     //Store the current gain value, so it can be recorded
     byte gain;
-    
+
     //Keep track of how many full rotations we've gone through
     int rotations;
 	bool mirrored;
 
     private:
-        byte _pin;
+        byte _mosi_pin;
+        byte _miso_pin;
+        byte _clk_pin;
+        byte _ss_pin;
         int _last_angle;
         int _init_angle;
 };
