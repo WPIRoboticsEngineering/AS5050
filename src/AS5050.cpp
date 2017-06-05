@@ -37,12 +37,6 @@
 #include "mbed.h"
 #include "AS5050.h"
 
-int main() {
-  /* code */
-  return 0;
-}
-
-
 AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin){
   /*CONSTRUCTOR
   * Sets up the required values for the function, and configures the
@@ -253,7 +247,8 @@ unsigned int AS5050::handleErrors(){  //now, handle errors:
 		/*
 		* Gain problems, automatically adjust
 		*/
-		if(REG_ERROR_STATUS & ERR_DSPAHI){										int gain=read(REG_GAIN_CONTROL);	//get information about current gain
+		if(REG_ERROR_STATUS & ERR_DSPAHI){
+      int gain=read(REG_GAIN_CONTROL);	//get information about current gain
 			write(REG_GAIN_CONTROL,--gain); 	//increment gain and send it back
 		}
 		else if(REG_ERROR_STATUS & ERR_DSPALO){
