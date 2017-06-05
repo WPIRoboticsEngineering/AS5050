@@ -39,6 +39,7 @@
 #include "mbed.h"
 
 
+
 //Various library options for tweaking behaviors
 #ifndef AS5050_AUTO_ERROR_HANDLING
   #define AS5050_AUTO_ERROR_HANDLING 1
@@ -52,6 +53,7 @@
 #define AS_WRITE  (0x0000)
 #define AS_READ   (0x8000)
 
+typedef uint8_t byte;
 
 /*AS5050 Register values
 Shifted 1 to make room for parity bit
@@ -116,7 +118,8 @@ union spi_data{
 
 class AS5050{
   public:
-    AS5050(byte mosi_pin, byte miso_pin, byte clk_pin, byte ss_pin, byte spi_speed);
+    AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin, byte spi_speed);
+
         unsigned int send(unsigned int);
 
     unsigned int read(unsigned int);
@@ -156,10 +159,12 @@ class AS5050{
 	bool mirrored;
 
     private:
-        byte _mosi_pin;
-        byte _miso_pin;
-        byte _clk_pin;
-        byte _ss_pin;
+        PinName _mosi_pin;
+        PinName _miso_pin;
+        PinName _clk_pin;
+        PinName _ss_pin;
+        DigitalOut _cs;
+        SPI _spi;
         int _last_angle;
         int _init_angle;
 };
