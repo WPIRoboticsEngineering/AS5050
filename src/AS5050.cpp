@@ -37,6 +37,11 @@
 #include "mbed.h"
 #include "AS5050.h"
 
+int main() {
+  /* code */
+  return 0;
+}
+
 
 AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin){
   /*CONSTRUCTOR
@@ -63,18 +68,18 @@ AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_p
   mirrored=true;
 };
 
-void begin(SPI *spi, DigitalOut *cs) {
+void AS5050::begin(SPI *spi, DigitalOut *cs) {
   //Prepare the SPI interface
-  _spi = spi;
-  _cs = cs;
+  this->_spi = spi;
+  this->_cs = cs;
 
   // Deselect the chip
-  _cs.write(1);
+  this->_cs->write(1);
 
   // Setup the spi for 16 bit data, high steady state clock,
   // falling edge (CPOL 1), low idle (CPHA 0) - MODE 2
-  _spi.format(16,2);
-  _spi.frequency(10000000);
+  this->_spi->format(16,2);
+  this->_spi->frequency(10000000);
 }
 
 unsigned int AS5050::send(unsigned int reg_a){
@@ -83,13 +88,13 @@ unsigned int AS5050::send(unsigned int reg_a){
   //This function does not take care of parity stuff,
   //due to peculiarities with it.
 
-  _cs->write(0);  //Start Transaction
+  this->_cs->write(0);  //Start Transaction
 
   //Send data in MSB order
-  response.bytes.msb=_spi->write(reg.bytes.msb);
-  response.bytes.lsb=_spi->write(reg.bytes.lsb);
+  response.bytes.msb=this->_spi->write(reg.bytes.msb);
+  response.bytes.lsb=this->_spi->write(reg.bytes.lsb);
 
-  _cs->write(1);	//End Transaction
+  this->_cs->write(1);	//End Transaction
 
   return response.value;
 };
