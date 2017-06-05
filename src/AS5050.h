@@ -118,9 +118,11 @@ union spi_data{
 
 class AS5050{
   public:
-    AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin, byte spi_speed);
+    AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin) { _SPI = NULL; };
 
-        unsigned int send(unsigned int);
+    void begin(SPI, DigitalOut) {  if (_spi) delete _spi; _spi=spi; }
+
+    unsigned int send(unsigned int);
 
     unsigned int read(unsigned int);
     unsigned int write(unsigned int,unsigned int);
@@ -163,8 +165,8 @@ class AS5050{
         PinName _miso_pin;
         PinName _clk_pin;
         PinName _ss_pin;
-        DigitalOut _cs;
-        SPI _spi;
+        SPI *_spi;
+        DigitalOut *_cs;
         int _last_angle;
         int _init_angle;
 };

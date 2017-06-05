@@ -38,7 +38,7 @@
 #include "AS5050.h"
 
 
-AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin, byte spi_speed){
+AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin){
   /*CONSTRUCTOR
   * Sets up the required values for the function, and configures the
   * hardware SPI to operate correctly
@@ -48,23 +48,7 @@ AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_p
   _clk_pin = clk_pin;
   _ss_pin = ss_pin;
 
-  //Prepare the SPI interface
-  DigitalOut cs(_ss_pin);
-  _cs = cs;
-
-  SPI spi(_mosi_pin, _miso_pin, _clk_pin); // mosi, miso, sclk
-  _spi = spi;
-
-  // Deselect chip
-  _cs = 1;
-
-  // Setup the spi for 16 bit data, high steady state clock,
-  // falling edge (CPOL 1), low idle (CPHA 0) - MODE 2
-  _spi.format(16,2);
-  _spi.frequency(spi_speed);
-
-  //pull pin mode low to assert slave
-  //digitalWrite(_pin,LOW);
+  begin(new SPI(_mosi_pin, _miso_pin, _clk_pin), new DigitalOut(_ss_pin));
 
   //Prepare the chip
   write(REG_MASTER_RESET,0x0); //do a full reset in case the chip glitched in the last power cycle
@@ -79,19 +63,33 @@ AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_p
   mirrored=true;
 };
 
+void begin(SPI *spi, DigitalOut *cs) {
+  //Prepare the SPI interface
+  _spi = spi;
+  _cs = cs;
+
+  // Deselect the chip
+  _cs.write(1);
+
+  // Setup the spi for 16 bit data, high steady state clock,
+  // falling edge (CPOL 1), low idle (CPHA 0) - MODE 2
+  _spi.format(16,2);
+  _spi.frequency(10000000);
+}
+
 unsigned int AS5050::send(unsigned int reg_a){
   spi_data response,reg;
   reg.value=reg_a;
   //This function does not take care of parity stuff,
   //due to peculiarities with it.
 
-  _cs = 0;  //Start Transaction
+  _cs->write(0);  //Start Transaction
 
   //Send data in MSB order
-  response.bytes.msb=_spi.write(reg.bytes.msb);
-  response.bytes.lsb=_spi.write(reg.bytes.lsb);
+  response.bytes.msb=_spi->write(reg.bytes.msb);
+  response.bytes.lsb=_spi->write(reg.bytes.lsb);
 
-  _cs = 1;	//End Transaction
+  _cs->write(1);	//End Transaction
 
   return response.value;
 };
