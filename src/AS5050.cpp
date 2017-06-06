@@ -37,6 +37,22 @@
 #include "mbed.h"
 #include "AS5050.h"
 
+AS5050 enc1(PB_5, PB_4, PB_3, PA_4); // mosi, miso, sclk, cs
+int main() {
+  int loop = 0;
+  int angle = 0;
+  while(1){
+    angle = enc1.angle();
+    wait_ms(1);
+    loop++;
+
+    if(loop >= 100) {
+      printf("Angle = %X\n", angle);
+      loop = 0;
+    }
+  }
+}
+
 AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin){
   /*CONSTRUCTOR
   * Sets up the required values for the function, and configures the
@@ -71,9 +87,9 @@ void AS5050::begin(SPI *spi, DigitalOut *cs) {
   this->_cs->write(1);
 
   // Setup the spi for 16 bit data, high steady state clock,
-  // falling edge (CPOL 1), low idle (CPHA 0) - MODE 2
-  this->_spi->format(16,2);
-  this->_spi->frequency(10000000);
+  // falling edge (CPOL 0), low idle (CPHA 1) - MODE 2
+  this->_spi->format(8,1);
+  this->_spi->frequency(1000000);
 }
 
 unsigned int AS5050::send(unsigned int reg_a){
@@ -90,10 +106,11 @@ unsigned int AS5050::send(unsigned int reg_a){
 
   this->_cs->write(1);	//End Transaction
 
+  // printf("Recieved \n", response.bytes.msb);
+
   return response.value;
 };
 
-//TODO: Rewrite for mbed
 unsigned int AS5050::read(unsigned int reg){
   /* Data packet looks like this:
   MSB |14 .......... 2|   1      | LSB
@@ -116,8 +133,6 @@ unsigned int AS5050::read(unsigned int reg){
   return reg; //remove error and parity bits
 }
 
-
-//TODO: Rewrite for mbed
 unsigned int AS5050::write(unsigned int reg,unsigned int data){
 
   //Prepare register data
@@ -139,6 +154,11 @@ unsigned int AS5050::write(unsigned int reg,unsigned int data){
 
   return data;      //remove parity and EF bits and return data.
 };
+
+unsigned int AS5050::status(){
+  unsigned int data = read(REG_CHIP_STATUS);
+  return data;
+}
 
 int AS5050::angle(){
   //This function strips out the error and parity

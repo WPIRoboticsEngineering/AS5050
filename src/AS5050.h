@@ -67,6 +67,7 @@ OR with AS_READ/AS_WRITE before sending command
 #define REG_GAIN_CONTROL   (0x3FF8)
 #define REG_ANGLE          (0x3FFF)
 #define REG_ERROR_STATUS   (0x33A5)
+#define REG_CHIP_STATUS    (0x3F20)
 
 //Data packets when writing the software Reset regarding clearing SPI or not
 #define DATA_SWRESET_SPI    (0x11)
@@ -125,7 +126,7 @@ class AS5050{
     void begin(SPI*,DigitalOut*);
 
     unsigned int send(unsigned int);
-
+    unsigned int status();
     unsigned int read(unsigned int);
     unsigned int write(unsigned int,unsigned int);
     unsigned int handleErrors();
