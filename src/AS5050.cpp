@@ -37,22 +37,6 @@
 #include "mbed.h"
 #include "AS5050.h"
 
-// AS5050 enc1(PB_5, PB_4, PB_3, PA_4); // mosi, miso, sclk, cs
-// int main() {
-//   int loop = 0;
-//   int angle = 0;
-//   while(1){
-//     angle = enc1.angle();
-//     wait_ms(1);
-//     loop++;
-//
-//     if(loop >= 100) {
-//       printf("Angle = %X\n", angle);
-//       loop = 0;
-//     }
-//   }
-// }
-
 AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin){
   /*CONSTRUCTOR
   * Sets up the required values for the function, and configures the
@@ -121,9 +105,7 @@ unsigned int AS5050::read(unsigned int reg){
   reg= (reg<<1) |(AS_READ); //make room for parity and set RW bi
   reg|= __builtin_parity(reg);  //set in the parity bit
 
-  send(reg);              //send data
-  //delayMicroseconds(1);       //hold time between transactions:50ns
-  reg=send(REG_NOP); //receive response from chip
+  reg = send(reg);              //send data
 
   //Save the parity error for analysis
   error.parity=__builtin_parity(reg&(~RES_PARITY)) != (reg&RES_PARITY);
@@ -155,6 +137,7 @@ unsigned int AS5050::write(unsigned int reg,unsigned int data){
   return data;      //remove parity and EF bits and return data.
 };
 
+// TODO: Check if works
 unsigned int AS5050::status(){
   unsigned int data = read(REG_CHIP_STATUS);
   return data;

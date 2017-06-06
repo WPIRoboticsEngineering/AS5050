@@ -42,7 +42,7 @@
 
 //Various library options for tweaking behaviors
 #ifndef AS5050_AUTO_ERROR_HANDLING
-  #define AS5050_AUTO_ERROR_HANDLING 1
+  #define AS5050_AUTO_ERROR_HANDLING 0
 #endif
 
 #ifndef AS5050_RESET_ON_ERRORS
