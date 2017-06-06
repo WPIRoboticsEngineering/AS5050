@@ -37,21 +37,21 @@
 #include "mbed.h"
 #include "AS5050.h"
 
-AS5050 enc1(PB_5, PB_4, PB_3, PA_4); // mosi, miso, sclk, cs
-int main() {
-  int loop = 0;
-  int angle = 0;
-  while(1){
-    angle = enc1.angle();
-    wait_ms(1);
-    loop++;
-
-    if(loop >= 100) {
-      printf("Angle = %X\n", angle);
-      loop = 0;
-    }
-  }
-}
+// AS5050 enc1(PB_5, PB_4, PB_3, PA_4); // mosi, miso, sclk, cs
+// int main() {
+//   int loop = 0;
+//   int angle = 0;
+//   while(1){
+//     angle = enc1.angle();
+//     wait_ms(1);
+//     loop++;
+//
+//     if(loop >= 100) {
+//       printf("Angle = %X\n", angle);
+//       loop = 0;
+//     }
+//   }
+// }
 
 AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin){
   /*CONSTRUCTOR
