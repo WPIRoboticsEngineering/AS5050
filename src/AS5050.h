@@ -83,25 +83,54 @@ OR with AS_READ/AS_WRITE before sending command
 #define RES_ERROR_ANGLE    (RES_PARITY| RES_ERROR_FLAG|RES_ALARM_HIGH|RES_ALARM_LOW)
 
 //Error Status Register
-#define ERR_PARITY    (1<<13)
-#define ERR_CLKMON    (1<<12)
-#define ERR_ADDMON    (1<<11)
-//#define RES_ERR_RESERVED3  (1<<10)
-#define ERR_WOW       (1<<9)
-#define ERR_MODE      (1<<8)
-//#define RES_ERR_RESERVED6  (1<<7)
+/*
+Set to high when the transmitted parity bit does not match to calculated
+parity bit.
+*/
+#define ERR_PARITY    (1<<0)
+/*
+Set to high when the amount of clock cycles is not correct.
+*/
+#define ERR_CLKMON    (1<<1)
+//Set to high when non existing address is used
+#define ERR_ADDMON    (1<<2)
+/*
+When a READ ANGLE command is in progress, the WOW flag is set to 1. At the
+end of the measurement the WOW flag is cleared to 0. Only in case of
+deadlock the WOW flag is stuck high; in which case a MASTER RESET must be
+sent to clear the deadlock.
+*/
+#define ERR_WOW       (1<<4)
+/*
+The ADCOV bit occurs if the magnetic input field strength is too large for at
+least one Hall element. This can be the case if the magnet is displaced. Second
+reason could be that the offset compensation after power up is not finished
+yet. If this happens some dummy READ ANGLE commands may be sent to
+settle the offset loop.
+*/
+#define ERR_ADCOV     (1<<8) ///#define RES_ERR_RESERVED6  (1<<7)
 //#define RES_ERR_RESERVED7  (1<<6)
-#define ERR_DACOV     (1<<5)	// DAC overflow
-#define ERR_DSPOV     (1<<4)    //DSP PRocessor overflow
-#define ERR_RANERR    (1<<3)	//Range error
-#define ERR_DSPALO    (1<<2)	//DSP Alarm low
-#define ERR_DSPAHI    (1<<1)	//DSP Alarm High
+/*
+The CORDIC calculates the angle. An error occurs when the input signals of the
+CORDIC are too large. The internal algorithm fails.
+*/
+#define ERR_CORDICOV  (1<<9)
+/*
+The RANGE flag signals that the Hall bias circuit has reached the head room
+limit. This might occur at the combination of low supply voltage, high
+temperature and low magnetic field. In this case, manually reducing the AGC
+setting (Figure 28) can be used to recover a valid Hall biasing condition.
+*/
+#define ERR_RANERR    (1<<10)	//Range error
+#define ERR_DSPALO    (1<<2)	//AGC level is equal or even higher than the maximum level. Magnetic field is too weak.
+#define ERR_DSPAHI    (1<<1)	//AGC level is equal or even lower than the minimum level. Magnetic field is too strong
 //#define RES_ERR_RESERVED13  (1<<0)
 
 //Set various limits on some values
-#define AS5050_ANGULAR_RESOLUTION 1024
+#define AS5050_ANGULAR_RESOLUTION ((1<<12)-1)
 #define AS5050_MAX_GAIN 31 //5 bits of storage
 #define AS5050_MIN_GAIN 0
+#define  AS5050_ALARM_BITMASK ((1<<13)|(1<<12))
 
 //Implementation specific value of tau
 #define AS5050_TAU 6.283185307179586232

@@ -106,10 +106,6 @@ unsigned int AS5050::read(unsigned int reg){
   send(reg);              //send data
   reg = send(REG_NOP);              //send data
 
-  //Save the parity error for analysis
-  error.parity=__builtin_parity(reg&(~RES_PARITY)) != (reg&RES_PARITY);
-  error.transaction|=error.parity;
-  error.transaction|=reg&RES_ERROR_FLAG;
 
   return reg; //remove error and parity bits
 }
@@ -152,20 +148,10 @@ int AS5050::angle(){
    AH | AL |  <data 10bit >                 | EF | PAR
   */
 
-  //save error data to the error register
-  //Check parity of transaction
-  //Save the parity error for analysis
-  error.parity=__builtin_parity(data&(~RES_PARITY)) != (data&RES_PARITY);
-  error.transaction|=error.parity;
-  //Save angular errors
-  error.transaction=(data|RES_ALARM_HIGH|RES_ALARM_LOW);
-
-
-
   //Automatically handle errors if we've enabled it
   #if AS5050_AUTO_ERROR_HANDLING==1
-  if(error.transaction){
-    error.status=read(REG_ERROR_STATUS);
+  if(data & AS5050_ALARM_BITMASK){
+    loadError();
     //handleErrors();
     //If there's a parity error, the angle might be invalid so prevent glitching by swapping in the last angle
     if(error.transaction&RES_PARITY) return _last_angle;
@@ -173,13 +159,14 @@ int AS5050::angle(){
   #endif
 
   //TODO this needs some work to avoid magic numbers
-  unsigned int angle=((data)&0x3FF); //strip away alarm bits, then parity and error flags
+
+  unsigned int angle=((data>>1)&(AS5050_ALARM_BITMASK^0xffff))&AS5050_ANGULAR_RESOLUTION; //strip away alarm bits, then parity and error flags
 
   //Allow the user to reverse the logical rotation
   //if(mirrored){angle=(AS5050_ANGULAR_RESOLUTION-1)-angle;}
 
   //track rollovers for continous angle monitoring
-  double boundForWrap = AS5050_ANGULAR_RESOLUTION/4;
+  double boundForWrap = AS5050_ANGULAR_RESOLUTION/6;
   double maxForWrap =(AS5050_ANGULAR_RESOLUTION-boundForWrap);
   if(_last_angle>maxForWrap && angle<=boundForWrap)
     rotations+=1;
@@ -188,6 +175,10 @@ int AS5050::angle(){
   _last_angle=angle;
 
   return angle;
+
+}
+void AS5050::loadError(){
+  error.status=read(REG_ERROR_STATUS);
 
 }
 int AS5050::angle(byte nsamples){
@@ -248,9 +239,9 @@ unsigned int AS5050::handleErrors(){  //now, handle errors:
 			//set high if the parity is wrong
 			//Avoid doing something insane and assume we'll come back to
 			//this function and try again with correct data
-      printf("\n\n ERR_PARITY \n\n");
+      //printf("\n\n ERR_PARITY \n\n");
 
-			return error.status;
+			//return error.status;
 		}
 
 		/*
@@ -259,13 +250,13 @@ unsigned int AS5050::handleErrors(){  //now, handle errors:
 		if(error.status & ERR_DSPAHI){
       int gain=read(REG_GAIN_CONTROL);	//get information about current gain
 			write(REG_GAIN_CONTROL,--gain); 	//increment gain and send it back
-      printf("\n\n ERR_DSPAHI \n\n");
+      //printf("\n\n ERR_DSPAHI \n\n");
 
 		}
 		else if(error.status & ERR_DSPALO){
 			int gain=read(REG_GAIN_CONTROL); 	//get information about current gain
 			write(REG_GAIN_CONTROL,++gain); 	//increment gain and send it back
-      printf("\n\n ERR_DSPALO \n\n");
+      //printf("\n\n ERR_DSPALO \n\n");
 
 		}
 
@@ -276,49 +267,48 @@ unsigned int AS5050::handleErrors(){  //now, handle errors:
 			//After a read, this gets set low. If it's high, there's an internal
 			//deadlock, and the chip must be reset
 			write(REG_SOFTWARE_RESET,DATA_SWRESET_SPI);
-      printf("\n\n ERR_WOW \n\n");
+      //printf("\n\n ERR_WOW \n\n");
 
 		}
-		if(error.status & ERR_DSPOV){
-			//CORDIC overflow, meaning input signals are too large.
-			//Gain adjustments should take care of this
-			write(REG_SOFTWARE_RESET,DATA_SWRESET_SPI);
-      printf("\n\nERR_DSPOV  \n\n");
 
-		}
 
 		/*
 		* Hardware issues. These need to warn the user somehow
 		*/
 		//TODO figure out some sane warning! This is not a good thing to have happen
-		if(error.status & ERR_DACOV){
-			//This indicates a Hall effect sensor is being saturated by too large of
-			//a magnetic field. This usually indicates a hardware failure such as a magnet
-			//being displaced
-      printf("\n\nERR_DACOV  \n\n");
+		if(error.status & ERR_CORDICOV){
+			//The CORDIC calculates the angle. An error occurs when the input signals of the
+      //CORDIC are too large. The internal algorithm fails.
+      //write(REG_SOFTWARE_RESET,DATA_SWRESET_SPI);
+      //printf("\n\nERR_CORDICOV  \n\n");
 		}
 		if(error.status & ERR_RANERR){
 			//Accuracy is decreasing due to increased tempurature affecting internal current source
-      printf("\n\n ERR_RANERR \n\n");
+      //printf("\n\n ERR_RANERR \n\n");
 
 		}
 
 		/*
 		* Reasonably harmless errors that can be fixed without reset
 		*/
-		if(error.status & ERR_MODE){
-			//set high if the chip is measuring an angle, otherwise low
-      printf("\n\nERR_MODE  \n\n");
+		if(error.status & ERR_ADCOV){
+			//V
+// The ADCOV bit occurs if the magnetic input field strength is too large for at
+// least one Hall element. This can be the case if the magnet is displaced. Second
+// reason could be that the offset compensation after power up is not finished
+// yet. If this happens some dummy READ ANGLE commands may be sent to
+// settle the offset loop
+      //printf("\n\n ERR_ADCOV  \n\n");
 
 		}
 		if(error.status & ERR_CLKMON){
 			//The clock cycles are not correct
-      printf("\n\n ERR_CLKMON \n\n");
+      //printf("\n\n ERR_CLKMON \n\n");
 
 		}
 		if(error.status & ERR_ADDMON){
 			//set high when an address is incorrect for the last operation
-      printf("\n\n ERR_ADDMON \n\n");
+      //printf("\n\n ERR_ADDMON \n\n");
 
 		}
 
@@ -329,7 +319,11 @@ unsigned int AS5050::handleErrors(){  //now, handle errors:
 	//If the error is still there, reset the AS5050 to attempt to fix it
 	#if AS5050_RESET_ON_ERRORS==1
 	//if(error.status)write(REG_SOFTWARE_RESET,DATA_SWRESET_SPI);
-	if(error.status)write(REG_MASTER_RESET,0x0);
+	if(error.status){
+    write(REG_MASTER_RESET,0x0);
+    printf("\n\n Encoder System Reset \n\n");
+
+  }
 	#endif
 	}
 
