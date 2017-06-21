@@ -42,7 +42,7 @@
 
 //Various library options for tweaking behaviors
 #ifndef AS5050_AUTO_ERROR_HANDLING
-  #define AS5050_AUTO_ERROR_HANDLING 0
+  #define AS5050_AUTO_ERROR_HANDLING 1
 #endif
 
 #ifndef AS5050_RESET_ON_ERRORS
@@ -162,8 +162,10 @@ class AS5050{
     //Keep track of how many full rotations we've gone through
     int rotations;
 	bool mirrored;
+  unsigned int data;
 
     private:
+        void loadError();
         PinName _mosi_pin;
         PinName _miso_pin;
         PinName _clk_pin;
