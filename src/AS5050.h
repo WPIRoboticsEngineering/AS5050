@@ -46,7 +46,7 @@
 #endif
 
 #ifndef AS5050_RESET_ON_ERRORS
-  #define AS5050_RESET_ON_ERRORS 1
+  #define AS5050_RESET_ON_ERRORS 0
 #endif
 
 //Command values for reading and writing

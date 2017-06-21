@@ -160,7 +160,7 @@ int AS5050::angle(){
 
   //TODO this needs some work to avoid magic numbers
 
-  unsigned int angle=((data>>1)&(AS5050_ALARM_BITMASK^0xffff))&AS5050_ANGULAR_RESOLUTION; //strip away alarm bits, then parity and error flags
+  unsigned int angle=((data>>2)&(AS5050_ALARM_BITMASK^0xffff))&AS5050_ANGULAR_RESOLUTION; //strip away alarm bits, then parity and error flags
 
   //Allow the user to reverse the logical rotation
   //if(mirrored){angle=(AS5050_ANGULAR_RESOLUTION-1)-angle;}
@@ -215,7 +215,7 @@ float AS5050::totalAngleRad(){
 
 
 long int AS5050::deltaAngle(){
-    return (angle()-_init_angle)+rotations*1024;
+    return (angle()-_init_angle)+rotations*AS5050_ANGULAR_RESOLUTION;
 }
 float AS5050::deltaAngleDegrees(){
     return (deltaAngle())*360/(float)AS5050_ANGULAR_RESOLUTION;
