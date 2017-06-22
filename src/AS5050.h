@@ -42,7 +42,7 @@
 
 //Various library options for tweaking behaviors
 #ifndef AS5050_AUTO_ERROR_HANDLING
-  #define AS5050_AUTO_ERROR_HANDLING 1
+  #define AS5050_AUTO_ERROR_HANDLING 0
 #endif
 
 #ifndef AS5050_RESET_ON_ERRORS
@@ -51,7 +51,7 @@
 
 //Command values for reading and writing
 #define AS_WRITE  (0x0000)
-#define AS_READ   (0x8000)
+#define AS_READ   (1<<15)
 
 typedef uint8_t byte;
 
@@ -161,7 +161,6 @@ class AS5050{
     unsigned int handleErrors();
     //These functions return the physical angle on the chip
     int angle();
-    int angle(byte nsamples);
     float angleDegrees();
     float angleRad();
     //These functions return the absolute angle from initial startup
@@ -192,6 +191,7 @@ class AS5050{
     int rotations;
 	bool mirrored;
   unsigned int data;
+  unsigned int angleData;
 
     private:
         void loadError();
