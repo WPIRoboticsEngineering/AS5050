@@ -79,16 +79,16 @@ unsigned int AS5050::send(unsigned int reg_a){
   reg.value=reg_a;
   //This function does not take care of parity stuff,
   //due to peculiarities with it.
-
+  //wait_us(10);
   this->_cs->write(0);  //Start Transaction
 
   //Send data in MSB order
+  //response.value=this->_spi->write(reg.value);
   response.bytes.msb=this->_spi->write(reg.bytes.msb);
   response.bytes.lsb=this->_spi->write(reg.bytes.lsb);
-
+  //wait_us(10);
   this->_cs->write(1);	//End Transaction
 
-  // printf("Recieved \n", response.bytes.msb);
 
   return response.value;
 };
