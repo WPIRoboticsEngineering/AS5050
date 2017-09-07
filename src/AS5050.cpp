@@ -37,17 +37,40 @@
 #include "mbed.h"
 #include "AS5050.h"
 
+AS5050::AS5050(SPI* commonSpi, PinName ss_pin){
+	  /*CONSTRUCTOR
+	  * Sets up the required values for the function, and configures the
+	  * hardware SPI to operate correctly
+	  */
+	  _ss_pin = ss_pin;
+
+	  begin(commonSpi, new DigitalOut(_ss_pin));
+
+	  //Prepare the chip
+	  write(REG_MASTER_RESET,0x0); //do a full reset in case the chip glitched in the last power cycle
+	  //Read angle twice to initialize chip and get to a known good state
+	  //Reading once won't work, as _last_angle will be set incorrectly
+	  angle();
+	  _init_angle=angle();
+	  //angle() will glitch on startup if it's >768, reset it
+	  rotations=0;
+
+	  //By default, we don't want the angle to be reversed
+	  mirrored=true;
+}
+
+
 AS5050::AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin){
   /*CONSTRUCTOR
   * Sets up the required values for the function, and configures the
   * hardware SPI to operate correctly
   */
-  _mosi_pin = mosi_pin;
-  _miso_pin = miso_pin;
-  _clk_pin = clk_pin;
+//  _mosi_pin = mosi_pin;
+//  _miso_pin = miso_pin;
+//  _clk_pin = clk_pin;
   _ss_pin = ss_pin;
 
-  begin(new SPI(_mosi_pin, _miso_pin, _clk_pin), new DigitalOut(_ss_pin));
+  begin(new SPI(mosi_pin, miso_pin, clk_pin), new DigitalOut(_ss_pin));
 
   //Prepare the chip
   write(REG_MASTER_RESET,0x0); //do a full reset in case the chip glitched in the last power cycle
@@ -69,7 +92,6 @@ void AS5050::begin(SPI *spi, DigitalOut *cs) {
 
   // Deselect the chip
   this->_cs->write(1);
-
   this->_spi->format(8,1);
   this->_spi->frequency(1000000);
 }
@@ -79,16 +101,15 @@ unsigned int AS5050::send(unsigned int reg_a){
   reg.value=reg_a;
   //This function does not take care of parity stuff,
   //due to peculiarities with it.
-  //wait_us(10);
-  this->_cs->write(0);  //Start Transaction
 
+  this->_spi->lock();
+  this->_cs->write(0);  //Start Transaction
   //Send data in MSB order
   //response.value=this->_spi->write(reg.value);
   response.bytes.msb=this->_spi->write(reg.bytes.msb);
   response.bytes.lsb=this->_spi->write(reg.bytes.lsb);
-  //wait_us(10);
   this->_cs->write(1);	//End Transaction
-
+  this->_spi->unlock();
 
   return response.value;
 };

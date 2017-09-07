@@ -37,6 +37,7 @@
 
 //Must include standard libs!
 #include "mbed.h"
+#include <SPI.h>
 
 
 
@@ -149,10 +150,9 @@ union spi_data{
 class AS5050{
   public:
     AS5050(PinName mosi_pin, PinName miso_pin, PinName clk_pin, PinName ss_pin);
+    AS5050(SPI* commonSpi,  PinName ss_pin);
 
-
-
-    void begin(SPI*,DigitalOut*);
+    void begin(SPI* commonSpi,DigitalOut*);
 
     unsigned int send(unsigned int);
     unsigned int status();
@@ -195,9 +195,7 @@ class AS5050{
 
     private:
         void loadError();
-        PinName _mosi_pin;
-        PinName _miso_pin;
-        PinName _clk_pin;
+
         PinName _ss_pin;
         SPI *_spi;
         DigitalOut *_cs;
